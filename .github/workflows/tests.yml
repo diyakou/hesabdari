@@ -1,0 +1,81 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: mobile_shop_test
+          POSTGRES_USER: mobile_shop
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mobile_shop -d mobile_shop_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:Q3BIcFFhOTF4eWQ5RVF6WFhRYjQrVFpjK0FmcFg1UW9iTk10R0o=
+      APP_LOCALE: fa
+      CACHE_STORE: array
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: mobile_shop_test
+      DB_USERNAME: mobile_shop
+      DB_PASSWORD: postgres
+      MAIL_MAILER: array
+      QUEUE_CONNECTION: sync
+      SESSION_DRIVER: array
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_pgsql
+          coverage: none
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Validate Composer metadata
+        run: composer validate --strict
+
+      - name: Check PHP formatting
+        run: vendor/bin/pint --test
+
+      - name: Verify PostgreSQL migrations and seeders
+        run: php artisan migrate:fresh --seed --force
+
+      - name: Run test suite on PostgreSQL
+        run: php artisan test

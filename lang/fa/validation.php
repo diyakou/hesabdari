@@ -1,0 +1,57 @@
+<?php
+
+return [
+    'accepted' => 'پذیرش :attribute الزامی است.',
+    'array' => ':attribute باید یک آرایه باشد.',
+    'boolean' => ':attribute فقط می‌تواند درست یا نادرست باشد.',
+    'confirmed' => 'تکرار :attribute مطابقت ندارد.',
+    'email' => ':attribute باید یک نشانی ایمیل معتبر باشد.',
+    'enum' => ':attribute انتخاب‌شده معتبر نیست.',
+    'in' => ':attribute انتخاب‌شده معتبر نیست.',
+    'integer' => ':attribute باید عدد صحیح باشد.',
+    'max' => [
+        'array' => ':attribute نباید بیشتر از :max مورد داشته باشد.',
+        'file' => 'حجم :attribute نباید بیشتر از :max کیلوبایت باشد.',
+        'numeric' => ':attribute نباید بزرگ‌تر از :max باشد.',
+        'string' => ':attribute نباید بیشتر از :max نویسه باشد.',
+    ],
+    'min' => [
+        'array' => ':attribute باید دست‌کم :min مورد داشته باشد.',
+        'file' => 'حجم :attribute باید دست‌کم :min کیلوبایت باشد.',
+        'numeric' => ':attribute باید دست‌کم :min باشد.',
+        'string' => ':attribute باید دست‌کم :min نویسه باشد.',
+    ],
+    'nullable' => ':attribute می‌تواند خالی باشد.',
+    'numeric' => ':attribute باید عدد باشد.',
+    'password' => [
+        'letters' => ':attribute باید حداقل یک حرف داشته باشد.',
+        'mixed' => ':attribute باید حداقل یک حرف بزرگ و یک حرف کوچک داشته باشد.',
+        'numbers' => ':attribute باید حداقل یک عدد داشته باشد.',
+        'symbols' => ':attribute باید حداقل یک نماد داشته باشد.',
+        'uncompromised' => ':attribute در نشت اطلاعات مشاهده شده است؛ مقدار دیگری انتخاب کنید.',
+    ],
+    'regex' => 'قالب :attribute معتبر نیست.',
+    'required' => 'وارد کردن :attribute الزامی است.',
+    'string' => ':attribute باید متن باشد.',
+    'unique' => ':attribute قبلاً ثبت شده است.',
+
+    'custom' => [],
+
+    'attributes' => [
+        'name' => 'نام و نام خانوادگی',
+        'email' => 'ایمیل',
+        'password' => 'رمز عبور',
+        'password_confirmation' => 'تکرار رمز عبور',
+        'role' => 'نقش کاربری',
+        'is_active' => 'وضعیت حساب',
+        'remember' => 'به خاطر سپردن ورود',
+        'store_name' => 'نام فروشگاه',
+        'legal_name' => 'نام حقوقی',
+        'store_phone' => 'تلفن فروشگاه',
+        'store_address' => 'نشانی فروشگاه',
+        'branch_name' => 'نام شعبه',
+        'branch_phone' => 'تلفن شعبه',
+        'branch_address' => 'نشانی شعبه',
+        'warehouse_name' => 'نام انبار',
+    ],
+];
