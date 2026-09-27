@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 # Production installer/deployer for pnp.securecodehub.ir
-# Target: Ubuntu 24.04 LTS (run as root).
+# Target: Ubuntu 22.04/24.04 LTS (run as root).
 
 DOMAIN="${DOMAIN:-pnp.securecodehub.ir}"
 APP_DIR="${APP_DIR:-/var/www/pnp.securecodehub.ir}"
@@ -55,11 +55,11 @@ while (($#)); do
 done
 
 [[ $EUID -eq 0 ]] || die "Run this script as root (sudo)."
-[[ -r /etc/os-release ]] || die "Unsupported operating system. Ubuntu 24.04 is required."
+[[ -r /etc/os-release ]] || die "Unsupported operating system. Ubuntu 22.04 or 24.04 is required."
 # shellcheck disable=SC1091
 source /etc/os-release
-[[ "${ID:-}" == "ubuntu" && "${VERSION_ID:-}" == "24.04" ]] || \
-    die "This installer supports Ubuntu 24.04 LTS only."
+[[ "${ID:-}" == "ubuntu" && ("${VERSION_ID:-}" == "22.04" || "${VERSION_ID:-}" == "24.04") ]] || \
+    die "This installer supports Ubuntu 22.04 and 24.04 LTS only."
 [[ "$DOMAIN" =~ ^[A-Za-z0-9.-]+$ ]] || die "Invalid DOMAIN."
 [[ "$DB_NAME" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || die "Invalid DB_NAME."
 [[ "$DB_USER" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || die "Invalid DB_USER."
@@ -77,6 +77,12 @@ export DEBIAN_FRONTEND=noninteractive
 
 log "Installing system packages"
 apt-get update
+if [[ "$VERSION_ID" == "22.04" ]]; then
+    # Laravel 13 requires PHP 8.3+, while Ubuntu 22.04 ships PHP 8.1.
+    apt-get install -y --no-install-recommends software-properties-common ca-certificates
+    add-apt-repository -y ppa:ondrej/php
+    apt-get update
+fi
 apt-get install -y --no-install-recommends \
     nginx postgresql postgresql-client php8.3-fpm php8.3-cli php8.3-pgsql \
     php8.3-mbstring php8.3-intl php8.3-gd php8.3-curl php8.3-xml php8.3-zip \

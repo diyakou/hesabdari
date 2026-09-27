@@ -1,7 +1,10 @@
 # دیپلوی روی `pnp.securecodehub.ir`
 
-این نصب‌کننده برای **Ubuntu 24.04 LTS** آماده شده و Nginx، PHP 8.3، PostgreSQL،
+این نصب‌کننده برای **Ubuntu 22.04 و 24.04 LTS** آماده شده و Nginx، PHP 8.3، PostgreSQL،
 صف Laravel، زمان‌بند systemd و HTTPS رایگان Let's Encrypt را پیکربندی می‌کند.
+
+در Ubuntu 22.04، به‌دلیل اینکه نسخه رسمی PHP آن 8.1 است، مخزن `ondrej/php`
+به‌صورت خودکار اضافه می‌شود تا PHP 8.3 موردنیاز Laravel 13 نصب شود.
 
 ## پیش‌نیاز
 

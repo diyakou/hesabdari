@@ -8,6 +8,9 @@
 .phpunit.result.cache
 /.fleet
 /.idea
+/.claude
+/.hooshyar
+/.laravel-bootstrap
 /.nova
 /.phpunit.cache
 /.vscode
