@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 # Production installer/deployer for pnp.securecodehub.ir
-# Target: Ubuntu 22.04/24.04 LTS (run as root).
+# Target: Ubuntu 22.04/24.04/26.04 LTS (run as root).
 
 DOMAIN="${DOMAIN:-pnp.securecodehub.ir}"
 APP_DIR="${APP_DIR:-/var/www/pnp.securecodehub.ir}"
@@ -55,11 +55,11 @@ while (($#)); do
 done
 
 [[ $EUID -eq 0 ]] || die "Run this script as root (sudo)."
-[[ -r /etc/os-release ]] || die "Unsupported operating system. Ubuntu 22.04 or 24.04 is required."
+[[ -r /etc/os-release ]] || die "Unsupported operating system. Ubuntu 22.04, 24.04, or 26.04 is required."
 # shellcheck disable=SC1091
 source /etc/os-release
-[[ "${ID:-}" == "ubuntu" && ("${VERSION_ID:-}" == "22.04" || "${VERSION_ID:-}" == "24.04") ]] || \
-    die "This installer supports Ubuntu 22.04 and 24.04 LTS only."
+[[ "${ID:-}" == "ubuntu" && ("${VERSION_ID:-}" == "22.04" || "${VERSION_ID:-}" == "24.04" || "${VERSION_ID:-}" == "26.04") ]] || \
+    die "This installer supports Ubuntu 22.04, 24.04, and 26.04 LTS only."
 [[ "$DOMAIN" =~ ^[A-Za-z0-9.-]+$ ]] || die "Invalid DOMAIN."
 [[ "$DB_NAME" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || die "Invalid DB_NAME."
 [[ "$DB_USER" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || die "Invalid DB_USER."
@@ -83,10 +83,28 @@ if [[ "$VERSION_ID" == "22.04" ]]; then
     add-apt-repository -y ppa:ondrej/php
     apt-get update
 fi
+
+if [[ "$VERSION_ID" == "26.04" ]]; then
+    PHP_PACKAGES=(php-fpm php-cli php-pgsql php-mbstring php-intl php-gd php-curl php-xml php-zip)
+else
+    PHP_PACKAGES=(php8.3-fpm php8.3-cli php8.3-pgsql php8.3-mbstring php8.3-intl php8.3-gd php8.3-curl php8.3-xml php8.3-zip)
+fi
+
 apt-get install -y --no-install-recommends \
-    nginx postgresql postgresql-client php8.3-fpm php8.3-cli php8.3-pgsql \
-    php8.3-mbstring php8.3-intl php8.3-gd php8.3-curl php8.3-xml php8.3-zip \
-    composer git rsync unzip curl ca-certificates gnupg certbot python3-certbot-nginx
+    nginx postgresql postgresql-client composer git rsync unzip curl ca-certificates \
+    gnupg certbot python3-certbot-nginx "${PHP_PACKAGES[@]}"
+
+PHP_VERSION="$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')"
+PHP_MAJOR="${PHP_VERSION%%.*}"
+PHP_MINOR="${PHP_VERSION##*.}"
+if ((PHP_MAJOR < 8 || (PHP_MAJOR == 8 && PHP_MINOR < 3))); then
+    die "PHP 8.3 or newer is required; installed version is $PHP_VERSION."
+fi
+PHP_FPM_SERVICE="php${PHP_VERSION}-fpm"
+PHP_FPM_SOCKET="/run/php/php${PHP_VERSION}-fpm.sock"
+PHP_FPM_CONF_DIR="/etc/php/${PHP_VERSION}/fpm/conf.d"
+[[ -S "$PHP_FPM_SOCKET" || -d "$PHP_FPM_CONF_DIR" ]] || \
+    die "PHP-FPM installation was not detected for PHP $PHP_VERSION."
 
 if ! command -v node >/dev/null 2>&1 || [[ "$(node -p 'Number(process.versions.node.split(".")[0])')" -lt 22 ]]; then
     install -d -m 0755 /etc/apt/keyrings
@@ -216,7 +234,7 @@ fi
 runuser -u "$APP_USER" -- php artisan optimize
 
 log "Configuring PHP-FPM and Nginx"
-cat >/etc/php/8.3/fpm/conf.d/99-pnp.ini <<'EOF'
+cat >"$PHP_FPM_CONF_DIR/99-pnp.ini" <<'EOF'
 expose_php=Off
 memory_limit=256M
 upload_max_filesize=20M
@@ -241,7 +259,7 @@ server {
     location = /robots.txt  { access_log off; log_not_found off; }
     location ~ \.php\$ {
         include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+        fastcgi_pass unix:$PHP_FPM_SOCKET;
     }
     location ~ /\.(?!well-known).* { deny all; }
     client_max_body_size 20m;
@@ -294,8 +312,8 @@ EOF
 
 nginx -t
 systemctl daemon-reload
-systemctl enable --now nginx php8.3-fpm postgresql pnp-queue.service pnp-scheduler.timer
-systemctl restart php8.3-fpm nginx pnp-queue.service
+systemctl enable --now nginx "$PHP_FPM_SERVICE" postgresql pnp-queue.service pnp-scheduler.timer
+systemctl restart "$PHP_FPM_SERVICE" nginx pnp-queue.service
 
 if [[ $WITH_SSL -eq 1 ]]; then
     log "Requesting Let's Encrypt certificate"
