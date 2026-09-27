@@ -477,4 +477,44 @@ class SaleAndCheckoutTest extends TestCase
         $response->assertDontSee('قیمت خرید');
         $response->assertDontSee('سود');
     }
+
+    public function test_customer_can_be_created_without_leaving_sales_form(): void
+    {
+        $response = $this->actingAs($this->salesperson)->postJson(route('sales.quick-party'), [
+            'name' => 'مشتری فوری',
+            'type' => 'individual',
+            'mobile' => '۰۹۱۲۳۴۵۶۷۸۹',
+        ]);
+
+        $response->assertCreated()->assertJsonStructure(['id', 'label']);
+        $this->assertDatabaseHas('parties', ['name' => 'مشتری فوری', 'mobile' => '09123456789']);
+        $this->assertDatabaseHas('party_roles', ['party_id' => $response->json('id'), 'role' => 'customer']);
+    }
+
+    public function test_manager_can_create_a_stock_product_without_leaving_sales_form(): void
+    {
+        $response = $this->actingAs($this->manager)->postJson(route('sales.quick-product'), [
+            'name' => 'کابل شارژ فوری',
+            'type' => 'stock',
+            'barcode' => '۶۲۶۱۲۳۴۵۶',
+            'selling_price_toman' => '۲۵۰٬۰۰۰',
+        ]);
+
+        $response->assertCreated()->assertJsonStructure(['id', 'label', 'selling_price_toman']);
+        $this->assertDatabaseHas('products', ['name' => 'کابل شارژ فوری', 'type' => 'stock']);
+        $this->assertDatabaseHas('product_variants', [
+            'id' => $response->json('id'),
+            'barcode' => '626123456',
+            'selling_price_rials' => 2500000,
+        ]);
+    }
+
+    public function test_salesperson_cannot_quick_create_products(): void
+    {
+        $this->actingAs($this->salesperson)->postJson(route('sales.quick-product'), [
+            'name' => 'کالای غیرمجاز',
+            'type' => 'stock',
+            'selling_price_toman' => 1000,
+        ])->assertForbidden();
+    }
 }

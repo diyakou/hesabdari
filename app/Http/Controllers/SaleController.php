@@ -3,17 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Invoicing\FinalizeSaleAction;
+use App\Actions\Parties\UpsertPartyAction;
 use App\Enums\DeviceStatus;
+use App\Enums\PartyType;
+use App\Enums\ProductType;
 use App\Models\Device;
 use App\Models\FinancialAccount;
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
 use App\Models\Party;
+use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Warehouse;
 use App\Services\Auditing\AuditLogger;
 use App\Support\Localization\LocalizedDigits;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -65,6 +70,68 @@ class SaleController extends Controller
         $financialAccounts = FinancialAccount::where('is_active', true)->get();
 
         return view('sales.create', compact('customers', 'warehouses', 'variants', 'availableDevices', 'financialAccounts'));
+    }
+
+    public function quickParty(Request $request, UpsertPartyAction $action): JsonResponse
+    {
+        Gate::authorize('create', Party::class);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'type' => ['required', 'string', 'in:individual,company'],
+            'mobile' => ['nullable', 'string', 'max:30'],
+        ]);
+
+        $party = $action->execute([
+            'name' => $validated['name'],
+            'type' => PartyType::from($validated['type']),
+            'roles' => ['customer'],
+            'mobile' => $validated['mobile'] ?? null,
+            'is_active' => true,
+        ]);
+
+        $this->auditLogger->record('party.created', $party, [], ['name' => $party->name, 'roles' => ['customer']], $request->user());
+
+        return response()->json([
+            'id' => $party->id,
+            'label' => $party->name.($party->mobile ? " ({$party->mobile})" : ''),
+        ], 201);
+    }
+
+    public function quickProduct(Request $request): JsonResponse
+    {
+        Gate::authorize('create', Product::class);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'type' => ['required', 'string', 'in:stock,service'],
+            'barcode' => ['nullable', 'string', 'max:100', 'unique:product_variants,barcode'],
+            'selling_price_toman' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        $variant = DB::transaction(function () use ($validated): ProductVariant {
+            $product = Product::create([
+                'name' => trim($validated['name']),
+                'type' => ProductType::from($validated['type']),
+                'is_active' => true,
+            ]);
+
+            return ProductVariant::create([
+                'product_id' => $product->id,
+                'sku' => sprintf('PRD-%06d', $product->id),
+                'barcode' => ! empty($validated['barcode']) ? trim((string) LocalizedDigits::toAscii($validated['barcode'])) : null,
+                'selling_price_rials' => (int) ($validated['selling_price_toman'] * 10),
+                'min_selling_price_rials' => (int) ($validated['selling_price_toman'] * 10),
+            ])->load('product');
+        });
+
+        $this->auditLogger->record('product.created', $variant->product, [], ['name' => $variant->product->name, 'sku' => $variant->sku], $request->user());
+
+        return response()->json([
+            'id' => $variant->id,
+            'label' => $variant->display_name.' ('.$variant->product->type->label().')',
+            'selling_price_toman' => (int) ($variant->selling_price_rials / 10),
+        ], 201);
     }
 
     public function store(Request $request): RedirectResponse

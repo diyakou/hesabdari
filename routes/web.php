@@ -33,6 +33,8 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::resource('purchases', \App\Http\Controllers\PurchaseController::class)->only(['index', 'create', 'store', 'show']);
     Route::post('/purchases/{invoice}/finalize', [\App\Http\Controllers\PurchaseController::class, 'finalize'])->name('purchases.finalize');
 
+    Route::post('/sales/quick-party', [\App\Http\Controllers\SaleController::class, 'quickParty'])->name('sales.quick-party');
+    Route::post('/sales/quick-product', [\App\Http\Controllers\SaleController::class, 'quickProduct'])->name('sales.quick-product');
     Route::resource('sales', \App\Http\Controllers\SaleController::class)->only(['index', 'create', 'store', 'show']);
     Route::get('/sales/{invoice}/print', [\App\Http\Controllers\SaleController::class, 'print'])->name('sales.print');
 

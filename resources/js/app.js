@@ -10,6 +10,46 @@ import Alpine from 'alpinejs';
 window.Alpine = Alpine;
 Alpine.start();
 
+// Localize visible numbers without changing form values, IDs or data sent to Laravel.
+const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+const localizeVisibleNumber = (value) => value
+    .replace(/\d/g, (digit) => persianDigits[Number(digit)])
+    .replace(/(?<=[۰-۹]),(?=[۰-۹])/g, '٬');
+
+const localizeTextNode = (node) => {
+    if (!node.nodeValue || node.parentElement?.closest('script, style, code, pre')) return;
+    const localized = localizeVisibleNumber(node.nodeValue);
+    if (localized !== node.nodeValue) node.nodeValue = localized;
+};
+
+const localizeTree = (root) => {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) localizeTextNode(node);
+};
+
+localizeTree(document.body);
+new MutationObserver((mutations) => mutations.forEach((mutation) => {
+    if (mutation.type === 'characterData') localizeTextNode(mutation.target);
+    mutation.addedNodes.forEach((node) => {
+        if (node.nodeType === Node.TEXT_NODE) localizeTextNode(node);
+        if (node.nodeType === Node.ELEMENT_NODE) localizeTree(node);
+    });
+})).observe(document.body, { subtree: true, childList: true, characterData: true });
+
+const asciiDigits = (value) => value.replace(/[۰-۹]/g, (digit) => String(persianDigits.indexOf(digit)));
+const formatMoneyInput = (input) => {
+    const raw = asciiDigits(input.value).replace(/[٬,\s]/g, '').replace(/[^\d.]/g, '');
+    if (!raw) return;
+    const [integer, decimal] = raw.split('.');
+    input.value = localizeVisibleNumber(Number(integer || 0).toLocaleString('en-US') + (decimal !== undefined ? `.${decimal}` : ''));
+};
+
+document.addEventListener('input', (event) => {
+    if (event.target.matches('[data-money-input]')) formatMoneyInput(event.target);
+});
+document.querySelectorAll('[data-money-input]').forEach(formatMoneyInput);
+
 // Replace cramped native mobile select menus with an accessible bottom sheet.
 const selectSheet = document.querySelector('[data-select-sheet]');
 const selectSheetTitle = selectSheet?.querySelector('#select-sheet-title');
@@ -112,8 +152,6 @@ document.querySelectorAll('[data-repeatable-lines]').forEach((container) => {
     const firstRow = container.querySelector('[data-repeatable-row]');
     if (!addButton || !firstRow) return;
 
-    const template = firstRow.cloneNode(true);
-
     const refresh = () => {
         const rows = [...container.querySelectorAll('[data-repeatable-row]')];
         rows.forEach((row, index) => {
@@ -137,7 +175,7 @@ document.querySelectorAll('[data-repeatable-lines]').forEach((container) => {
 
     bindRemove(firstRow);
     addButton.addEventListener('click', () => {
-        const row = template.cloneNode(true);
+        const row = firstRow.cloneNode(true);
         row.querySelectorAll('input, textarea').forEach((field) => {
             if (field.type !== 'hidden') field.value = field.name.includes('[quantity]') ? '1' : ((field.name.includes('[discount_value]') || field.name.includes('[discount_toman]')) ? '0' : '');
         });
@@ -148,4 +186,75 @@ document.querySelectorAll('[data-repeatable-lines]').forEach((container) => {
         row.querySelector('select, input')?.focus();
     });
     refresh();
+});
+
+// Quick-create customer and product dialogs on the sales form.
+const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+const partyDialog = document.querySelector('#quick-party-dialog');
+const productDialog = document.querySelector('#quick-product-dialog');
+let activeVariantSelect = null;
+
+document.addEventListener('click', (event) => {
+    const partyButton = event.target.closest('[data-open-quick-party]');
+    if (partyButton && partyDialog) partyDialog.showModal();
+
+    const productButton = event.target.closest('[data-open-quick-product]');
+    if (productButton && productDialog) {
+        activeVariantSelect = productButton.closest('[data-repeatable-row]')?.querySelector('[data-product-variant-select]') ?? null;
+        productDialog.showModal();
+    }
+
+    if (event.target.closest('[data-close-dialog]')) event.target.closest('dialog')?.close();
+});
+
+const submitQuickCreate = async (container, button, onSuccess) => {
+    const errors = container.querySelector('[data-form-errors]');
+    const payload = Object.fromEntries([...container.querySelectorAll('[data-field]')].map((field) => [field.dataset.field, field.value]));
+    button.disabled = true;
+    errors.classList.add('hidden');
+
+    try {
+        const response = await fetch(container.dataset.endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify(payload),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            const messages = data.errors ? Object.values(data.errors).flat() : [data.message || 'ثبت اطلاعات انجام نشد.'];
+            errors.textContent = messages.join(' ');
+            errors.classList.remove('hidden');
+            return;
+        }
+        onSuccess(data);
+        container.closest('dialog')?.close();
+        container.querySelectorAll('input').forEach((input) => { input.value = ''; });
+    } catch {
+        errors.textContent = 'ارتباط با سرور برقرار نشد. دوباره تلاش کنید.';
+        errors.classList.remove('hidden');
+    } finally {
+        button.disabled = false;
+    }
+};
+
+const quickParty = document.querySelector('[data-quick-party]');
+quickParty?.querySelector('[data-submit-quick-party]')?.addEventListener('click', (event) => {
+    submitQuickCreate(quickParty, event.currentTarget, (party) => {
+        const select = document.querySelector('#party_id');
+        select.add(new Option(party.label, party.id, true, true));
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+});
+
+const quickProduct = document.querySelector('[data-quick-product]');
+quickProduct?.querySelector('[data-submit-quick-product]')?.addEventListener('click', (event) => {
+    submitQuickCreate(quickProduct, event.currentTarget, (product) => {
+        document.querySelectorAll('[data-product-variant-select]').forEach((select) => {
+            select.add(new Option(`${product.label} - قیمت: ${Number(product.selling_price_toman).toLocaleString('fa-IR')}`, product.id, false, select === activeVariantSelect));
+        });
+        const row = activeVariantSelect?.closest('[data-repeatable-row]');
+        const price = row?.querySelector('[name$="[unit_price_toman]"]');
+        if (price) price.value = product.selling_price_toman;
+        activeVariantSelect?.dispatchEvent(new Event('change', { bubbles: true }));
+    });
 });

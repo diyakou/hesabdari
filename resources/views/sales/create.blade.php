@@ -11,7 +11,12 @@
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
-                <label for="party_id" class="label">مشتری طرف‌حساب <span class="text-rose-500">*</span></label>
+                <div class="mb-1 flex items-center justify-between">
+                    <label for="party_id" class="label mb-0">مشتری طرف‌حساب <span class="text-rose-500">*</span></label>
+                    @can('create', App\Models\Party::class)
+                        <button type="button" data-open-quick-party class="text-xs font-bold text-teal-700">+ مشتری جدید</button>
+                    @endcan
+                </div>
                 <select id="party_id" name="party_id" required class="input-text">
                     <option value="">انتخاب مشتری...</option>
                     @foreach($customers as $cust)
@@ -46,8 +51,13 @@
                         <button type="button" data-remove-line class="hidden rounded-lg px-2 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50">حذف ردیف</button>
                     </div>
                     <div class="sm:col-span-2">
-                        <label class="label">کالا یا خدمت <span class="text-rose-500">*</span></label>
-                        <select name="lines[0][product_variant_id]" required class="input-text">
+                        <div class="mb-1 flex items-center justify-between">
+                            <label class="label mb-0">کالا یا خدمت <span class="text-rose-500">*</span></label>
+                            @can('create', App\Models\Product::class)
+                                <button type="button" data-open-quick-product class="text-xs font-bold text-teal-700">+ تعریف سریع</button>
+                            @endcan
+                        </div>
+                        <select name="lines[0][product_variant_id]" required class="input-text" data-product-variant-select>
                             <option value="">انتخاب کالا / تنوع...</option>
                             @foreach($variants as $variant)
                                 <option value="{{ $variant->id }}">
@@ -64,7 +74,7 @@
 
                     <div>
                         <label class="label">قیمت واحد فروش (تومان) <span class="text-rose-500">*</span></label>
-                        <input type="number" name="lines[0][unit_price_toman]" min="0" required class="input-text font-mono">
+                        <input type="text" inputmode="numeric" data-money-input name="lines[0][unit_price_toman]" required class="input-text font-mono">
                     </div>
 
                     <div>
@@ -77,7 +87,7 @@
 
                     <div>
                         <label class="label">مقدار تخفیف ردیف</label>
-                        <input type="number" name="lines[0][discount_value]" value="0" min="0" step="0.01" class="input-text font-mono">
+                        <input type="text" inputmode="decimal" data-money-input name="lines[0][discount_value]" value="0" class="input-text font-mono">
                     </div>
 
                     <div class="sm:col-span-4">
@@ -99,7 +109,7 @@
         <div class="border-t border-slate-100 pt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
                 <label for="discount_toman" class="label">تخفیف کل فاکتور (تومان)</label>
-                <input type="number" id="discount_toman" name="discount_toman" value="{{ old('discount_toman', 0) }}" min="0" class="input-text font-mono">
+                <input type="text" inputmode="numeric" data-money-input id="discount_toman" name="discount_toman" value="{{ old('discount_toman', 0) }}" class="input-text font-mono">
                 <p class="text-xs text-slate-400 mt-1">تخفیف به صورت خودکار و تناسبی بین ردیف‌های فاکتور توزیع می‌شود.</p>
             </div>
 
@@ -115,7 +125,7 @@
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
                     <label for="payment_amount_toman" class="label">مبلغ دریافتی (تومان)</label>
-                    <input type="number" id="payment_amount_toman" name="payment[amount_toman]" value="{{ old('payment.amount_toman') }}" min="0" placeholder="مبلغ تسویه فوری" class="input-text font-mono">
+                    <input type="text" inputmode="numeric" data-money-input id="payment_amount_toman" name="payment[amount_toman]" value="{{ old('payment.amount_toman') }}" placeholder="مبلغ تسویه فوری" class="input-text font-mono">
                 </div>
 
                 <div>
@@ -152,5 +162,37 @@
             </div>
         </div>
     </form>
+
+    @can('create', App\Models\Party::class)
+        <dialog id="quick-party-dialog" class="m-auto w-[min(32rem,calc(100%-2rem))] rounded-2xl border-0 p-0 shadow-2xl backdrop:bg-slate-950/50">
+            <div class="space-y-4 p-6" data-quick-party data-endpoint="{{ route('sales.quick-party') }}">
+                <div class="flex items-center justify-between"><h2 class="font-extrabold text-slate-900">ثبت سریع مشتری</h2><button type="button" data-close-dialog class="text-2xl text-slate-400">×</button></div>
+                <div data-form-errors class="hidden rounded-lg bg-rose-50 p-3 text-xs text-rose-700"></div>
+                <div><label class="label">نام مشتری *</label><input data-field="name" class="input-text" required></div>
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div><label class="label">نوع</label><select data-field="type" class="input-text"><option value="individual">شخص حقیقی</option><option value="company">شرکت</option></select></div>
+                    <div><label class="label">موبایل</label><input data-field="mobile" class="input-text font-mono" inputmode="numeric"></div>
+                </div>
+                <div class="flex justify-end gap-2"><button type="button" data-close-dialog class="button-secondary">انصراف</button><button type="button" data-submit-quick-party class="button-primary">ثبت و انتخاب مشتری</button></div>
+            </div>
+        </dialog>
+    @endcan
+
+    @can('create', App\Models\Product::class)
+        <dialog id="quick-product-dialog" class="m-auto w-[min(36rem,calc(100%-2rem))] rounded-2xl border-0 p-0 shadow-2xl backdrop:bg-slate-950/50">
+            <div class="space-y-4 p-6" data-quick-product data-endpoint="{{ route('sales.quick-product') }}">
+                <div class="flex items-center justify-between"><h2 class="font-extrabold text-slate-900">تعریف سریع کالا یا خدمت</h2><button type="button" data-close-dialog class="text-2xl text-slate-400">×</button></div>
+                <p class="text-xs text-slate-500">گوشی و کالای سریالی باید از بخش ثبت دستگاه همراه IMEI وارد شود.</p>
+                <div data-form-errors class="hidden rounded-lg bg-rose-50 p-3 text-xs text-rose-700"></div>
+                <div><label class="label">عنوان *</label><input data-field="name" class="input-text" required></div>
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div><label class="label">نوع</label><select data-field="type" class="input-text"><option value="stock">کالای تعدادی</option><option value="service">خدمت</option></select></div>
+                    <div><label class="label">بارکد</label><input data-field="barcode" class="input-text font-mono"></div>
+                </div>
+                <div><label class="label">قیمت فروش (تومان) *</label><input data-field="selling_price_toman" data-money-input type="text" inputmode="numeric" class="input-text font-mono" required></div>
+                <div class="flex justify-end gap-2"><button type="button" data-close-dialog class="button-secondary">انصراف</button><button type="button" data-submit-quick-product class="button-primary">ثبت و انتخاب کالا</button></div>
+            </div>
+        </dialog>
+    @endcan
 </div>
 @endsection
