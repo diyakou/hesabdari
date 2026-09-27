@@ -91,7 +91,7 @@
                             <span class="font-mono font-bold {{ $adj->quantity_change > 0 ? 'text-emerald-700' : 'text-rose-700' }}" dir="ltr">
                                 {{ $adj->quantity_change > 0 ? '+' : '' }}{{ $adj->quantity_change }}
                             </span>
-                            <span class="text-slate-400 font-mono" dir="ltr">{{ $adj->created_at->format('Y-m-d H:i') }}</span>
+                            <span class="text-slate-400 font-mono">{{ persian_date($adj->created_at, true) }}</span>
                             <span class="text-slate-500">ثبت: {{ $adj->creator?->name }}</span>
                         </div>
                     </div>

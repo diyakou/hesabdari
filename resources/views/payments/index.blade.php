@@ -89,7 +89,7 @@
                             {{ number_format($payment->amount_rials / 10) }}
                         </td>
                         <td class="p-4 text-xs text-slate-600 font-mono" dir="ltr">
-                            {{ $payment->date->format('Y-m-d') }}
+                            {{ persian_date($payment->date) }}
                         </td>
                         <td class="p-4">
                             <a href="{{ route('payments.show', $payment) }}" class="text-xs font-medium text-slate-600 hover:text-teal-700">رسید</a>

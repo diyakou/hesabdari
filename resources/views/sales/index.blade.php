@@ -60,7 +60,7 @@
                             {{ $sale->party?->name }}
                         </td>
                         <td class="p-4 text-xs text-slate-600 font-mono" dir="ltr">
-                            {{ $sale->issue_date->format('Y-m-d') }}
+                            {{ persian_date($sale->issue_date) }}
                         </td>
                         <td class="p-4 text-xs text-slate-600">
                             {{ $sale->warehouse?->name ?: '—' }}

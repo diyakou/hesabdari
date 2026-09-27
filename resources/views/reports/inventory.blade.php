@@ -71,7 +71,7 @@
                                 {{ number_format($idle->total_cost_rials / 10) }}
                             </td>
                             <td class="p-3 font-mono text-xs text-slate-500" dir="ltr">
-                                {{ $idle->updated_at->format('Y-m-d') }}
+                                {{ persian_date($idle->updated_at) }}
                             </td>
                         </tr>
                     @empty

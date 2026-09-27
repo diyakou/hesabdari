@@ -60,7 +60,7 @@
                             {{ $expense->party?->name ?: '—' }}
                         </td>
                         <td class="p-4 text-xs text-slate-600 font-mono" dir="ltr">
-                            {{ $expense->date->format('Y-m-d') }}
+                            {{ persian_date($expense->date) }}
                         </td>
                         <td class="p-4 font-semibold text-rose-700 font-mono">
                             {{ number_format($expense->amount_rials / 10) }}

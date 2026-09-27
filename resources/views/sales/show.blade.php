@@ -43,7 +43,7 @@
             </div>
             <div class="flex justify-between">
                 <span class="text-slate-500">تاریخ صدور:</span>
-                <span class="font-mono" dir="ltr">{{ $invoice->issue_date->format('Y-m-d') }}</span>
+                <span class="font-mono">{{ persian_date($invoice->issue_date) }}</span>
             </div>
         </div>
 

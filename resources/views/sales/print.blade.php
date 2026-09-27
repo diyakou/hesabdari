@@ -37,7 +37,7 @@
                 <p class="text-[10px] text-slate-500 mt-1">فاکتور فروش کالا و خدمات</p>
                 <div class="mt-2 text-[11px] flex justify-between">
                     <span>شماره: {{ $invoice->invoice_number }}</span>
-                    <span>{{ $invoice->issue_date->format('Y-m-d') }}</span>
+                    <span>{{ persian_date($invoice->issue_date) }}</span>
                 </div>
                 <div class="text-[11px] text-right mt-1">
                     <span>مشتری: {{ $invoice->party?->name }}</span>
@@ -110,7 +110,7 @@
                 </div>
                 <div class="text-left text-xs space-y-1 font-mono">
                     <div><span class="text-slate-500">شماره فاکتور:</span> <span class="font-bold text-sm text-slate-900" dir="ltr">{{ $invoice->invoice_number }}</span></div>
-                    <div><span class="text-slate-500">تاریخ:</span> <span dir="ltr">{{ $invoice->issue_date->format('Y-m-d') }}</span></div>
+                    <div><span class="text-slate-500">تاریخ:</span> <span>{{ persian_date($invoice->issue_date) }}</span></div>
                 </div>
             </div>
 

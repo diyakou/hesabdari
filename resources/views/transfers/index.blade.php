@@ -39,7 +39,7 @@
                             {{ $transfer->destinationAccount?->name }}
                         </td>
                         <td class="p-4 text-xs text-slate-600 font-mono" dir="ltr">
-                            {{ $transfer->date->format('Y-m-d') }}
+                            {{ persian_date($transfer->date) }}
                         </td>
                         <td class="p-4 font-semibold text-slate-900 font-mono">
                             {{ number_format($transfer->amount_rials / 10) }}

@@ -21,7 +21,7 @@
                 </div>
             </div>
             <div class="rounded-2xl border border-blue-300/20 bg-white/[.07] p-5 backdrop-blur-sm">
-                <div class="flex items-center justify-between text-xs"><span class="rounded-lg bg-sky-400/15 px-2 py-1 text-sky-200">امروز</span><span class="font-bold text-blue-100">{{ now()->format('Y/m/d') }}</span></div>
+                <div class="flex items-center justify-between text-xs"><span class="rounded-lg bg-sky-400/15 px-2 py-1 text-sky-200">امروز</span><span class="font-bold text-blue-100">{{ persian_date(now()) }}</span></div>
                 <p class="mt-5 text-xs text-blue-200">فروش امروز</p>
                 @can('canSeeFinancials', App\Models\User::class)
                     <p class="mt-1 text-3xl font-black font-tabular">{{ number_format($todaySalesTotalRials / 10) }} <span class="text-xs font-normal text-sky-300">تومان</span></p>

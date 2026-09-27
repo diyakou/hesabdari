@@ -271,7 +271,7 @@
                     <div class="flex items-center gap-3 shrink-0">
                         <span class="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 border border-slate-200/60 font-tabular" dir="ltr">
                             <span class="size-1.5 rounded-full bg-emerald-500"></span>
-                            {{ now()->format('Y/m/d') }}
+                            {{ persian_date(now()) }}
                         </span>
 
                         <span class="hidden items-center gap-1.5 rounded-lg border border-blue-100 bg-blue-50/50 px-3 py-1.5 text-[11px] text-slate-500 md:inline-flex"><span class="size-2 rounded-full bg-amber-400"></span> نسخه عملیاتی</span>

@@ -11,7 +11,7 @@
         @if($invoice->purchasePaymentPlan->payment_type === 'installment')
             <p class="mt-3 text-xs text-slate-600">پیش‌پرداخت: <b>{{ number_format($invoice->purchasePaymentPlan->down_payment_rials / 10) }} تومان</b></p>
             <div class="mt-3 overflow-x-auto"><table class="w-full text-xs"><thead class="bg-slate-50"><tr><th class="p-2">شماره چک</th><th class="p-2">صیاد</th><th class="p-2">بانک</th><th class="p-2">مبلغ</th><th class="p-2">سررسید</th><th class="p-2">وضعیت</th></tr></thead><tbody>
-            @foreach($invoice->purchasePaymentPlan->checks as $check)<tr class="border-t border-slate-100"><td class="p-2">{{ $check->check_number }}</td><td class="p-2 font-mono">{{ $check->sayad_id ?: '—' }}</td><td class="p-2">{{ $check->bank_name }}</td><td class="p-2">{{ number_format($check->amount_rials / 10) }} تومان</td><td class="p-2">{{ $check->due_date->format('Y-m-d') }}</td><td class="p-2">در انتظار</td></tr>@endforeach
+            @foreach($invoice->purchasePaymentPlan->checks as $check)<tr class="border-t border-slate-100"><td class="p-2">{{ $check->check_number }}</td><td class="p-2 font-mono">{{ $check->sayad_id ?: '—' }}</td><td class="p-2">{{ $check->bank_name }}</td><td class="p-2">{{ number_format($check->amount_rials / 10) }} تومان</td><td class="p-2">{{ persian_date($check->due_date) }}</td><td class="p-2">در انتظار</td></tr>@endforeach
             </tbody></table></div>
         @endif
     </section>
@@ -58,7 +58,7 @@
             </div>
             <div class="flex justify-between">
                 <span class="text-slate-500">تاریخ فاکتور:</span>
-                <span class="font-mono" dir="ltr">{{ $invoice->issue_date->format('Y-m-d') }}</span>
+                <span class="font-mono">{{ persian_date($invoice->issue_date) }}</span>
             </div>
         </div>
 

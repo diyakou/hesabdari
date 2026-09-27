@@ -59,7 +59,7 @@
                             {{ $purchase->party?->name }}
                         </td>
                         <td class="p-4 text-xs text-slate-600 font-mono" dir="ltr">
-                            {{ $purchase->issue_date->format('Y-m-d') }}
+                            {{ persian_date($purchase->issue_date) }}
                         </td>
                         <td class="p-4 text-xs text-slate-600">
                             {{ $purchase->warehouse?->name ?: '—' }}

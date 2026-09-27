@@ -56,7 +56,7 @@
                                         <span class="badge bg-slate-200 text-slate-700">غیرفعال</span>
                                     @endif
                                 </td>
-                                <td class="px-5 py-4 text-slate-600" dir="ltr">{{ $user->created_at->timezone('Asia/Tehran')->format('Y-m-d H:i') }}</td>
+                                <td class="px-5 py-4 text-slate-600">{{ persian_date($user->created_at, true) }}</td>
                                 <td class="px-5 py-4 text-left">
                                     <a href="{{ route('admin.users.edit', $user) }}" class="inline-flex min-h-10 items-center rounded-lg px-3 text-sm font-bold text-teal-700 hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600">ویرایش</a>
                                 </td>

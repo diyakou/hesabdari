@@ -105,16 +105,16 @@
                     </div>
                     <div>
                         <dt class="text-xs text-slate-500">تاریخ ثبت</dt>
-                        <dd class="font-mono text-slate-700 mt-0.5" dir="ltr">{{ $order->created_at->format('Y-m-d H:i') }}</dd>
+                        <dd class="font-mono text-slate-700 mt-0.5">{{ persian_date($order->created_at, true) }}</dd>
                     </div>
                     <div>
                         <dt class="text-xs text-slate-500">تاریخ تحویل موعود</dt>
-                        <dd class="font-mono text-slate-700 mt-0.5" dir="ltr">{{ $order->promised_date ? $order->promised_date->format('Y-m-d') : 'تعیین نشده' }}</dd>
+                        <dd class="font-mono text-slate-700 mt-0.5">{{ $order->promised_date ? persian_date($order->promised_date) : 'تعیین نشده' }}</dd>
                     </div>
                     @if($order->delivered_date)
                         <div>
                             <dt class="text-xs text-slate-500">تاریخ تحویل واقعی</dt>
-                            <dd class="font-mono text-slate-700 mt-0.5" dir="ltr">{{ $order->delivered_date->format('Y-m-d H:i') }}</dd>
+                            <dd class="font-mono text-slate-700 mt-0.5">{{ persian_date($order->delivered_date, true) }}</dd>
                         </div>
                     @endif
                     @if($order->cancellation_reason)

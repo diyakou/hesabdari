@@ -33,7 +33,7 @@
             </div>
             <div>
                 <span class="text-xs text-slate-500 block">تاریخ سند:</span>
-                <span class="font-mono text-sm text-slate-900" dir="ltr">{{ $payment->date->format('Y-m-d') }}</span>
+                <span class="font-mono text-sm text-slate-900">{{ persian_date($payment->date) }}</span>
             </div>
         </div>
 

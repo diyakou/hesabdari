@@ -64,7 +64,7 @@
                             {{ $order->technician?->name ?: 'تعیین‌نشده' }}
                         </td>
                         <td class="p-4 text-xs text-slate-600 font-mono" dir="ltr">
-                            {{ $order->promised_date ? $order->promised_date->format('Y-m-d') : '—' }}
+                            {{ $order->promised_date ? persian_date($order->promised_date) : '—' }}
                         </td>
                         <td class="p-4 text-xs font-mono">
                             @can('canSeeFinancials', App\Models\User::class)
