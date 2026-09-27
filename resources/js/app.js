@@ -174,6 +174,7 @@ document.querySelectorAll('[data-repeatable-lines]').forEach((container) => {
             if (container.querySelectorAll('[data-repeatable-row]').length > 1) {
                 row.remove();
                 refresh();
+                container.dispatchEvent(new Event('input', { bubbles: true }));
             }
         });
     };
@@ -188,9 +189,53 @@ document.querySelectorAll('[data-repeatable-lines]').forEach((container) => {
         container.insertBefore(row, addButton);
         bindRemove(row);
         refresh();
+        container.dispatchEvent(new Event('input', { bubbles: true }));
         row.querySelector('select, input')?.focus();
     });
     refresh();
+});
+
+document.querySelectorAll('[data-invoice-calculator]').forEach((form) => {
+    const readNumber = (field) => {
+        if (!field) return 0;
+        const normalized = asciiDigits(field.value).replace(/[٬,\s]/g, '');
+        const value = Number(normalized);
+        return Number.isFinite(value) ? value : 0;
+    };
+    const displayMoney = (value) => `${Math.max(0, Math.round(value)).toLocaleString('fa-IR')} تومان`;
+
+    const calculate = () => {
+        let subtotal = 0;
+        let lineDiscounts = 0;
+        form.querySelectorAll('[data-repeatable-row]').forEach((row) => {
+            const quantity = readNumber(row.querySelector('[name$="[quantity]"]'));
+            const price = readNumber(row.querySelector('[name$="[unit_price_toman]"]'));
+            const gross = quantity * price;
+            const discountValue = readNumber(row.querySelector('[name$="[discount_value]"]'));
+            const discountType = row.querySelector('[name$="[discount_type]"]')?.value || 'amount';
+            subtotal += gross;
+            lineDiscounts += discountType === 'percentage' ? gross * Math.min(discountValue, 100) / 100 : discountValue;
+        });
+
+        const afterLines = Math.max(0, subtotal - lineDiscounts);
+        const invoiceDiscountValue = readNumber(form.querySelector('[name="discount_value"]'));
+        const invoiceDiscountType = form.querySelector('[name="discount_type"]')?.value || 'amount';
+        const invoiceDiscount = invoiceDiscountType === 'percentage'
+            ? afterLines * Math.min(invoiceDiscountValue, 100) / 100
+            : invoiceDiscountValue;
+        const totalDiscount = Math.min(subtotal, lineDiscounts + invoiceDiscount);
+        const additional = readNumber(form.querySelector('[name="additional_cost_toman"]'));
+        const total = subtotal - totalDiscount + additional;
+
+        form.querySelector('[data-summary-subtotal]').textContent = displayMoney(subtotal);
+        form.querySelector('[data-summary-discount]').textContent = displayMoney(totalDiscount);
+        form.querySelector('[data-summary-additional]').textContent = displayMoney(additional);
+        form.querySelector('[data-summary-total]').textContent = displayMoney(total);
+    };
+
+    form.addEventListener('input', calculate);
+    form.addEventListener('change', calculate);
+    calculate();
 });
 
 // Quick-create customer and product dialogs on the sales form.

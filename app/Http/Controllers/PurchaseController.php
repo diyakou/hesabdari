@@ -80,7 +80,10 @@ class PurchaseController extends Controller
             'lines.*.device_id' => ['nullable', 'exists:devices,id'],
             'lines.*.quantity' => ['required', 'integer', 'min:1'],
             'lines.*.unit_price_toman' => ['required', 'numeric', 'min:0'],
-            'lines.*.discount_toman' => ['nullable', 'numeric', 'min:0'],
+            'lines.*.discount_type' => ['nullable', 'string', 'in:amount,percentage'],
+            'lines.*.discount_value' => ['nullable', 'numeric', 'min:0'],
+            'discount_type' => ['nullable', 'string', 'in:amount,percentage'],
+            'discount_value' => ['nullable', 'numeric', 'min:0'],
             'payment_type' => ['required', 'in:cash,installment'],
             'down_payment_toman' => ['nullable', 'numeric', 'min:0'],
             'installment_notes' => ['nullable', 'string', 'max:1000'],
@@ -114,19 +117,33 @@ class PurchaseController extends Controller
             ]);
 
             $subtotalRials = 0;
-            $discountRials = 0;
+            $lineDiscountRialsTotal = 0;
+            $createdLines = [];
 
-            foreach ($validated['lines'] as $lineData) {
+            foreach ($validated['lines'] as $lineIndex => $lineData) {
                 $variant = ProductVariant::with('product')->findOrFail($lineData['product_variant_id']);
                 $qty = (int) $lineData['quantity'];
                 $unitPriceRials = (int) ($lineData['unit_price_toman'] * 10);
-                $lineDiscountRials = ! empty($lineData['discount_toman']) ? (int) ($lineData['discount_toman'] * 10) : 0;
-
                 $lineSubtotal = $qty * $unitPriceRials;
+                $discountType = $lineData['discount_type'] ?? 'amount';
+                $discountValue = (float) ($lineData['discount_value'] ?? 0);
+                if ($discountType === 'percentage' && $discountValue > 100) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        "lines.{$lineIndex}.discount_value" => 'درصد تخفیف ردیف نمی‌تواند بیشتر از ۱۰۰ باشد.',
+                    ]);
+                }
+                $lineDiscountRials = $discountType === 'percentage'
+                    ? (int) floor($lineSubtotal * $discountValue / 100)
+                    : (int) ($discountValue * 10);
+                if ($lineDiscountRials > $lineSubtotal) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        "lines.{$lineIndex}.discount_value" => 'تخفیف ردیف نمی‌تواند از مبلغ همان ردیف بیشتر باشد.',
+                    ]);
+                }
                 $subtotalRials += $lineSubtotal;
-                $discountRials += $lineDiscountRials;
+                $lineDiscountRialsTotal += $lineDiscountRials;
 
-                InvoiceLine::create([
+                $createdLines[] = InvoiceLine::create([
                     'invoice_id' => $invoice->id,
                     'product_id' => $variant->product_id,
                     'product_variant_id' => $variant->id,
@@ -136,6 +153,35 @@ class PurchaseController extends Controller
                     'discount_rials' => $lineDiscountRials,
                 ]);
             }
+
+            $discountableRials = $subtotalRials - $lineDiscountRialsTotal;
+            $invoiceDiscountType = $validated['discount_type'] ?? 'amount';
+            $invoiceDiscountValue = (float) ($validated['discount_value'] ?? 0);
+            if ($invoiceDiscountType === 'percentage' && $invoiceDiscountValue > 100) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'discount_value' => 'درصد تخفیف کل نمی‌تواند بیشتر از ۱۰۰ باشد.',
+                ]);
+            }
+            $invoiceLevelDiscountRials = $invoiceDiscountType === 'percentage'
+                ? (int) floor($discountableRials * $invoiceDiscountValue / 100)
+                : (int) ($invoiceDiscountValue * 10);
+            if ($invoiceLevelDiscountRials > $discountableRials) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'discount_value' => 'تخفیف کل نمی‌تواند از مبلغ باقی‌مانده فاکتور بیشتر باشد.',
+                ]);
+            }
+
+            $allocated = 0;
+            foreach ($createdLines as $index => $createdLine) {
+                $lineNet = ($createdLine->quantity * $createdLine->unit_price_rials) - $createdLine->discount_rials;
+                $share = $index === count($createdLines) - 1
+                    ? $invoiceLevelDiscountRials - $allocated
+                    : ($discountableRials > 0 ? intdiv($lineNet * $invoiceLevelDiscountRials, $discountableRials) : 0);
+                $createdLine->increment('discount_rials', $share);
+                $allocated += $share;
+            }
+
+            $discountRials = $lineDiscountRialsTotal + $invoiceLevelDiscountRials;
 
             $invoice->subtotal_rials = $subtotalRials;
             $invoice->discount_rials = $discountRials;

@@ -6,7 +6,7 @@
 
 @section('content')
 <div class="max-w-4xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-    <form method="POST" action="{{ route('purchases.store') }}" class="space-y-6" x-data="{ paymentType: '{{ old('payment_type', 'cash') }}', checks: {{ Js::from(old('checks', [['check_number'=>'','sayad_id'=>'','bank_name'=>'','account_owner'=>'','amount_toman'=>'','due_date'=>'']])) }} }">
+    <form method="POST" action="{{ route('purchases.store') }}" class="space-y-6" data-invoice-calculator x-data="{ paymentType: '{{ old('payment_type', 'cash') }}', checks: {{ Js::from(old('checks', [['check_number'=>'','sayad_id'=>'','bank_name'=>'','account_owner'=>'','amount_toman'=>'','due_date'=>'']])) }} }">
         @csrf
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -63,12 +63,20 @@
 
                     <div>
                         <label class="label">قیمت واحد (تومان) <span class="text-rose-500">*</span></label>
-                        <input type="number" name="lines[0][unit_price_toman]" min="0" required class="input-text font-mono">
+                        <input type="text" inputmode="numeric" data-money-input name="lines[0][unit_price_toman]" required class="input-text font-mono">
                     </div>
 
                     <div>
-                        <label class="label">تخفیف ردیف (تومان)</label>
-                        <input type="number" name="lines[0][discount_toman]" value="0" min="0" class="input-text font-mono">
+                        <label class="label">نوع تخفیف ردیف</label>
+                        <select name="lines[0][discount_type]" class="input-text">
+                            <option value="amount">مبلغی (تومان)</option>
+                            <option value="percentage">درصدی</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="label">مقدار تخفیف ردیف</label>
+                        <input type="text" inputmode="decimal" data-money-input name="lines[0][discount_value]" value="0" class="input-text font-mono">
                     </div>
 
                     <div class="sm:col-span-5">
@@ -87,7 +95,17 @@
             </div>
         </div>
 
-        <div class="border-t border-slate-100 pt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div class="border-t border-slate-100 pt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+                <label class="label">تخفیف کل فاکتور</label>
+                <div class="grid grid-cols-[9rem_1fr] gap-2">
+                    <select name="discount_type" class="input-text">
+                        <option value="amount">مبلغی</option>
+                        <option value="percentage">درصدی</option>
+                    </select>
+                    <input type="text" inputmode="decimal" data-money-input name="discount_value" value="{{ old('discount_value', 0) }}" class="input-text font-mono">
+                </div>
+            </div>
             <div>
                 <label for="additional_cost_toman" class="label">هزینه جانبی خرید (تسهیم در بهای تمام‌شده) به تومان</label>
                 <input type="number" id="additional_cost_toman" name="additional_cost_toman" value="{{ old('additional_cost_toman', 0) }}" min="0" class="input-text font-mono">
@@ -99,6 +117,13 @@
                 <textarea id="notes" name="notes" rows="2" class="input-text">{{ old('notes') }}</textarea>
             </div>
         </div>
+
+        <section class="grid grid-cols-2 gap-3 rounded-xl border border-teal-100 bg-teal-50 p-4 sm:grid-cols-4" data-purchase-summary>
+            <div><span class="block text-xs text-slate-500">جمع اقلام</span><strong data-summary-subtotal class="mt-1 block text-sm text-slate-900">۰ تومان</strong></div>
+            <div><span class="block text-xs text-slate-500">تخفیف</span><strong data-summary-discount class="mt-1 block text-sm text-rose-700">۰ تومان</strong></div>
+            <div><span class="block text-xs text-slate-500">هزینه جانبی</span><strong data-summary-additional class="mt-1 block text-sm text-amber-700">۰ تومان</strong></div>
+            <div><span class="block text-xs text-slate-500">مبلغ نهایی</span><strong data-summary-total class="mt-1 block text-lg text-teal-800">۰ تومان</strong></div>
+        </section>
 
         <section class="rounded-xl border border-blue-100 bg-blue-50/40 p-4">
             <h3 class="mb-3 text-sm font-extrabold text-slate-800">شرایط پرداخت خرید</h3>

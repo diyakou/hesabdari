@@ -517,4 +517,30 @@ class SaleAndCheckoutTest extends TestCase
             'selling_price_toman' => 1000,
         ])->assertForbidden();
     }
+
+    public function test_sales_form_supports_percentage_invoice_discount(): void
+    {
+        $response = $this->actingAs($this->salesperson)->post(route('sales.store'), [
+            'party_id' => $this->customer->id,
+            'warehouse_id' => $this->warehouse->id,
+            'issue_date' => '۱۴۰۵/۰۱/۰۱',
+            'discount_type' => 'percentage',
+            'discount_value' => '۱۰',
+            'finalize_now' => 0,
+            'lines' => [[
+                'product_variant_id' => $this->serviceVariant->id,
+                'quantity' => 2,
+                'unit_price_toman' => '۱٬۰۰۰٬۰۰۰',
+                'discount_type' => 'percentage',
+                'discount_value' => '۱۰',
+            ]],
+        ]);
+
+        $response->assertRedirect();
+        $invoice = Invoice::where('type', 'sale')->latest('id')->firstOrFail();
+        $this->assertSame(20_000_000, $invoice->subtotal_rials);
+        $this->assertSame(1_800_000, $invoice->discount_rials);
+        $this->assertSame(16_200_000, $invoice->total_amount_rials);
+        $this->assertSame(2_000_000, $invoice->lines()->firstOrFail()->discount_rials);
+    }
 }

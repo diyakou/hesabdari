@@ -332,4 +332,31 @@ class PurchaseAndCostingTest extends TestCase
             ],
         ]);
     }
+
+    public function test_purchase_form_supports_percentage_discounts_and_calculates_total(): void
+    {
+        $response = $this->actingAs($this->manager)->post(route('purchases.store'), [
+            'party_id' => $this->supplier->id,
+            'warehouse_id' => $this->warehouse->id,
+            'issue_date' => '۱۴۰۵/۰۱/۰۱',
+            'additional_cost_toman' => '۱۰۰٬۰۰۰',
+            'payment_type' => 'cash',
+            'discount_type' => 'percentage',
+            'discount_value' => '۱۰',
+            'lines' => [[
+                'product_variant_id' => $this->caseVariant->id,
+                'quantity' => 2,
+                'unit_price_toman' => '۱٬۰۰۰٬۰۰۰',
+                'discount_type' => 'percentage',
+                'discount_value' => '۱۰',
+            ]],
+        ]);
+
+        $response->assertRedirect();
+        $invoice = Invoice::where('type', 'purchase')->latest('id')->firstOrFail();
+        $this->assertSame(20_000_000, $invoice->subtotal_rials);
+        $this->assertSame(3_800_000, $invoice->discount_rials);
+        $this->assertSame(17_200_000, $invoice->total_amount_rials);
+        $this->assertSame(3_800_000, $invoice->lines()->firstOrFail()->discount_rials);
+    }
 }

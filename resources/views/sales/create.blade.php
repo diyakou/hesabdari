@@ -6,7 +6,7 @@
 
 @section('content')
 <div class="max-w-4xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-    <form method="POST" action="{{ route('sales.store') }}" class="space-y-6">
+    <form method="POST" action="{{ route('sales.store') }}" class="space-y-6" data-invoice-calculator>
         @csrf
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -108,8 +108,11 @@
 
         <div class="border-t border-slate-100 pt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-                <label for="discount_toman" class="label">تخفیف کل فاکتور (تومان)</label>
-                <input type="text" inputmode="numeric" data-money-input id="discount_toman" name="discount_toman" value="{{ old('discount_toman', 0) }}" class="input-text font-mono">
+                <label for="discount_value" class="label">تخفیف کل فاکتور</label>
+                <div class="grid grid-cols-[9rem_1fr] gap-2">
+                    <select name="discount_type" class="input-text"><option value="amount">مبلغی</option><option value="percentage">درصدی</option></select>
+                    <input type="text" inputmode="decimal" data-money-input id="discount_value" name="discount_value" value="{{ old('discount_value', 0) }}" class="input-text font-mono">
+                </div>
                 <p class="text-xs text-slate-400 mt-1">تخفیف به صورت خودکار و تناسبی بین ردیف‌های فاکتور توزیع می‌شود.</p>
             </div>
 
@@ -118,6 +121,13 @@
                 <textarea id="notes" name="notes" rows="2" class="input-text">{{ old('notes') }}</textarea>
             </div>
         </div>
+
+        <section class="grid grid-cols-2 gap-3 rounded-xl border border-teal-100 bg-teal-50 p-4 sm:grid-cols-4" data-purchase-summary>
+            <div><span class="block text-xs text-slate-500">جمع اقلام</span><strong data-summary-subtotal class="mt-1 block text-sm text-slate-900">۰ تومان</strong></div>
+            <div><span class="block text-xs text-slate-500">تخفیف</span><strong data-summary-discount class="mt-1 block text-sm text-rose-700">۰ تومان</strong></div>
+            <div><span class="block text-xs text-slate-500">هزینه جانبی</span><strong data-summary-additional class="mt-1 block text-sm text-amber-700">۰ تومان</strong></div>
+            <div><span class="block text-xs text-slate-500">مبلغ نهایی</span><strong data-summary-total class="mt-1 block text-lg text-teal-800">۰ تومان</strong></div>
+        </section>
 
         <div class="border-t border-slate-100 pt-4 bg-teal-50/50 p-4 rounded-xl border border-teal-100">
             <h3 class="text-sm font-bold text-teal-900 mb-3">تسویه فوری فاکتور (صندوق / کارت‌خوان)</h3>

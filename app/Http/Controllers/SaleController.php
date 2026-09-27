@@ -142,7 +142,8 @@ class SaleController extends Controller
             'party_id' => ['required', 'exists:parties,id'],
             'warehouse_id' => ['required', 'exists:warehouses,id'],
             'issue_date' => ['required', 'date'],
-            'discount_toman' => ['nullable', 'numeric', 'min:0'],
+            'discount_type' => ['nullable', 'string', 'in:amount,percentage'],
+            'discount_value' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'lines' => ['required', 'array', 'min:1'],
             'lines.*.product_variant_id' => ['required', 'exists:product_variants,id'],
@@ -158,11 +159,7 @@ class SaleController extends Controller
             'payment.payment_method' => ['nullable', 'string', 'in:cash,pos,bank_transfer'],
         ]);
 
-        $invoiceDiscountRials = ! empty($validated['discount_toman'])
-            ? (int) ($validated['discount_toman'] * 10)
-            : 0;
-
-        $invoice = DB::transaction(function () use ($validated, $invoiceDiscountRials, $request) {
+        $invoice = DB::transaction(function () use ($validated, $request) {
             $countToday = Invoice::whereDate('created_at', now()->toDateString())->count();
             $invoiceNumber = 'SAL-' . now()->format('Ymd') . '-' . str_pad((string) ($countToday + 1), 4, '0', STR_PAD_LEFT);
 
@@ -173,7 +170,7 @@ class SaleController extends Controller
                 'warehouse_id' => $validated['warehouse_id'],
                 'issue_date' => $validated['issue_date'],
                 'status' => 'draft',
-                'discount_rials' => $invoiceDiscountRials,
+                'discount_rials' => 0,
                 'notes' => $validated['notes'] ?? null,
                 'created_by' => $request->user()->id,
             ]);
@@ -222,13 +219,26 @@ class SaleController extends Controller
                 ]);
             }
 
-            if ($invoiceDiscountRials > ($subtotalRials - $lineDiscountRialsTotal)) {
+            $discountableRials = $subtotalRials - $lineDiscountRialsTotal;
+            $invoiceDiscountType = $validated['discount_type'] ?? 'amount';
+            $invoiceDiscountValue = (float) ($validated['discount_value'] ?? 0);
+            if ($invoiceDiscountType === 'percentage' && $invoiceDiscountValue > 100) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
-                    'discount_toman' => 'تخفیف کل فاکتور نمی‌تواند از مبلغ باقی‌مانده پس از تخفیف ردیف‌ها بیشتر باشد.',
+                    'discount_value' => 'درصد تخفیف کل نمی‌تواند بیشتر از ۱۰۰ باشد.',
+                ]);
+            }
+            $invoiceDiscountRials = $invoiceDiscountType === 'percentage'
+                ? (int) floor($discountableRials * $invoiceDiscountValue / 100)
+                : (int) ($invoiceDiscountValue * 10);
+
+            if ($invoiceDiscountRials > $discountableRials) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'discount_value' => 'تخفیف کل فاکتور نمی‌تواند از مبلغ باقی‌مانده پس از تخفیف ردیف‌ها بیشتر باشد.',
                 ]);
             }
 
             $invoice->subtotal_rials = $subtotalRials;
+            $invoice->discount_rials = $invoiceDiscountRials;
             $invoice->total_amount_rials = $subtotalRials - $lineDiscountRialsTotal - $invoiceDiscountRials;
             $invoice->save();
 
