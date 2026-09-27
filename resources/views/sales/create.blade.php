@@ -36,7 +36,7 @@
 
             <div>
                 <label for="issue_date" class="label">تاریخ فروش <span class="text-rose-500">*</span></label>
-                <input type="date" id="issue_date" name="issue_date" value="{{ old('issue_date', now()->toDateString()) }}" required class="input-text font-mono">
+                <input type="text" data-jdp autocomplete="off" id="issue_date" name="issue_date" value="{{ persian_date(old('issue_date', now())) }}" required class="input-text font-mono">
             </div>
         </div>
 

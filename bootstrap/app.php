@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\NormalizeJalaliDates;
 use App\Http\Middleware\NormalizeLocalizedNumbers;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -13,7 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web(append: [NormalizeLocalizedNumbers::class]);
+        $middleware->web(append: [NormalizeLocalizedNumbers::class, NormalizeJalaliDates::class]);
         $middleware->alias([
             'active' => EnsureUserIsActive::class,
         ]);

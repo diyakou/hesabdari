@@ -64,9 +64,11 @@
                             تاریخ انتقال <span class="text-rose-500">*</span>
                         </label>
                         <input
-                            type="date"
+                            type="text"
+                            data-jdp
+                            autocomplete="off"
                             name="date"
-                            value="{{ old('date', now()->toDateString()) }}"
+                            value="{{ persian_date(old('date', now())) }}"
                             required
                             class="input-text w-full font-mono"
                             dir="ltr"

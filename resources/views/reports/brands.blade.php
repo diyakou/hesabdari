@@ -10,11 +10,11 @@
         <form method="GET" action="{{ route('reports.brands') }}" class="flex flex-wrap items-center gap-3">
             <div class="flex items-center gap-2">
                 <label class="text-xs text-slate-500">از تاریخ:</label>
-                <input type="date" name="start_date" value="{{ $startDate }}" class="input-text font-mono text-xs" dir="ltr">
+                <input type="text" data-jdp autocomplete="off" name="start_date" value="{{ $startDate ? persian_date($startDate) : '' }}" class="input-text font-mono text-xs">
             </div>
             <div class="flex items-center gap-2">
                 <label class="text-xs text-slate-500">تا تاریخ:</label>
-                <input type="date" name="end_date" value="{{ $endDate }}" class="input-text font-mono text-xs" dir="ltr">
+                <input type="text" data-jdp autocomplete="off" name="end_date" value="{{ $endDate ? persian_date($endDate) : '' }}" class="input-text font-mono text-xs">
             </div>
             <button type="submit" class="button-primary text-xs">اعمال فیلتر بازه</button>
             @if($startDate || $endDate)

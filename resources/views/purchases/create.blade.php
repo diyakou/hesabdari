@@ -31,7 +31,7 @@
 
             <div>
                 <label for="issue_date" class="label">تاریخ فاکتور <span class="text-rose-500">*</span></label>
-                <input type="date" id="issue_date" name="issue_date" value="{{ old('issue_date', now()->toDateString()) }}" required class="input-text font-mono">
+                <input type="text" data-jdp autocomplete="off" id="issue_date" name="issue_date" value="{{ persian_date(old('issue_date', now())) }}" required class="input-text font-mono">
             </div>
         </div>
 
@@ -120,7 +120,7 @@
                             <div><label class="label">بانک *</label><input class="input-text" :name="`checks[${index}][bank_name]`" x-model="check.bank_name" required></div>
                             <div><label class="label">صاحب حساب</label><input class="input-text" :name="`checks[${index}][account_owner]`" x-model="check.account_owner"></div>
                             <div><label class="label">مبلغ چک (تومان) *</label><input class="input-text font-mono" type="number" min="1" :name="`checks[${index}][amount_toman]`" x-model="check.amount_toman" required></div>
-                            <div><label class="label">تاریخ سررسید *</label><input class="input-text font-mono" type="date" :name="`checks[${index}][due_date]`" x-model="check.due_date" required></div>
+                            <div><label class="label">تاریخ سررسید *</label><input class="input-text font-mono" type="text" data-jdp autocomplete="off" :name="`checks[${index}][due_date]`" x-model="check.due_date" required></div>
                         </div>
                     </div>
                 </template>

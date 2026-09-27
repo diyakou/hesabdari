@@ -5,10 +5,15 @@ import '@fontsource/vazirmatn/600.css';
 import '@fontsource/vazirmatn/700.css';
 import '@fontsource/vazirmatn/800.css';
 import '@fontsource/vazirmatn/900.css';
+import '@majidh1/jalalidatepicker/dist/jalalidatepicker.min.css';
+import '@majidh1/jalalidatepicker/dist/jalalidatepicker.min.js';
 import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;
 Alpine.start();
+window.jalaliDatepicker?.startWatch({
+    separatorChars: { date: '/', between: ' ', time: ':', targetDate: '-', targetBetween: ' ', targetTime: ':' },
+});
 
 // Localize visible numbers without changing form values, IDs or data sent to Laravel.
 const persianDigits = '۰۱۲۳۴۵۶۷۸۹';

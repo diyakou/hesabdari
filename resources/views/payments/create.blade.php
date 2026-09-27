@@ -49,7 +49,7 @@
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
                 <label for="date" class="label">تاریخ سند <span class="text-rose-500">*</span></label>
-                <input type="date" id="date" name="date" value="{{ old('date', now()->toDateString()) }}" required class="input-text font-mono">
+                <input type="text" data-jdp autocomplete="off" id="date" name="date" value="{{ persian_date(old('date', now())) }}" required class="input-text font-mono">
             </div>
 
             <div>

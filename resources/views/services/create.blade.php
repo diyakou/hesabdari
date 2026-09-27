@@ -81,9 +81,11 @@
                         تاریخ تحویل موعود
                     </label>
                     <input
-                        type="date"
+                        type="text"
+                        data-jdp
+                        autocomplete="off"
                         name="promised_date"
-                        value="{{ old('promised_date') }}"
+                        value="{{ old('promised_date') ? persian_date(old('promised_date')) : '' }}"
                         class="input-text w-full font-mono"
                         dir="ltr"
                     >
