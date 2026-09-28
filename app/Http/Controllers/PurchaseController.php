@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\Purchases\FinalizePurchaseAction;
 use App\Enums\PartyRoleType;
 use App\Models\Device;
+use App\Models\Cheque;
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
 use App\Models\Party;
@@ -201,6 +202,13 @@ class PurchaseController extends Controller
                     $plan->checks()->create([
                         'check_number' => $check['check_number'], 'sayad_id' => $check['sayad_id'] ?? null,
                         'bank_name' => $check['bank_name'], 'account_owner' => $check['account_owner'] ?? null,
+                        'amount_rials' => (int) ($check['amount_toman'] * 10), 'due_date' => $check['due_date'],
+                    ]);
+                    Cheque::create([
+                        'direction' => 'issued', 'status' => 'scheduled', 'party_id' => $invoice->party_id,
+                        'source_invoice_id' => $invoice->id, 'check_number' => $check['check_number'],
+                        'sayad_id' => $check['sayad_id'] ?? null, 'bank_name' => $check['bank_name'],
+                        'account_owner' => $check['account_owner'] ?? null,
                         'amount_rials' => (int) ($check['amount_toman'] * 10), 'due_date' => $check['due_date'],
                     ]);
                 }

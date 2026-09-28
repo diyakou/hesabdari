@@ -27,6 +27,7 @@
         </form>
 
         <div class="flex items-center gap-2">
+            <a href="{{ route('cheques.index') }}" class="button-secondary">مدیریت چک‌ها</a>
             @can('create', App\Models\Payment::class)
                 <a href="{{ route('payments.create', ['type' => 'receipt']) }}" class="button-primary bg-emerald-700 hover:bg-emerald-800">
                     + ثبت دریافت وجه
@@ -79,6 +80,8 @@
                                     'cash' => 'نقدی',
                                     'pos' => 'کارت‌خوان',
                                     'bank_transfer' => 'حواله / پایا',
+                                    'cheque' => 'چک',
+                                    'endorsed_cheque' => 'خرج چک دریافتی',
                                 ];
                             @endphp
                             <span class="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700 font-medium">

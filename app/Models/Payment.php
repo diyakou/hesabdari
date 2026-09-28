@@ -49,4 +49,9 @@ class Payment extends Model
     {
         return $this->hasMany(PaymentAllocation::class);
     }
+
+    public function cheques(): HasMany
+    {
+        return $this->hasMany(Cheque::class);
+    }
 }

@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\Party;
 use App\Models\Payment;
 use App\Models\PaymentAllocation;
+use App\Models\Cheque;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -78,6 +79,22 @@ class RecordPaymentAction
                 'created_by' => $actor?->id ?? 1,
             ]);
 
+            if (($data['payment_method'] ?? null) === 'cheque' && ! empty($data['cheque'])) {
+                Cheque::create([
+                    'direction' => $data['type'] === 'receipt' ? 'received' : 'issued',
+                    'status' => $data['type'] === 'receipt' ? 'on_hand' : 'scheduled',
+                    'party_id' => $party->id,
+                    'payment_id' => $payment->id,
+                    'check_number' => $data['cheque']['check_number'],
+                    'sayad_id' => $data['cheque']['sayad_id'] ?? null,
+                    'bank_name' => $data['cheque']['bank_name'],
+                    'account_owner' => $data['cheque']['account_owner'] ?? null,
+                    'amount_rials' => $amount,
+                    'due_date' => $data['cheque']['due_date'],
+                    'notes' => $data['notes'] ?? null,
+                ]);
+            }
+
             // Process allocations if provided
             $allocations = $data['allocations'] ?? [];
             $totalAllocated = 0;
@@ -128,7 +145,9 @@ class RecordPaymentAction
                             'notes' => "کاهش بدهی به تأمین‌کننده {$party->name}",
                         ],
                         [
-                            'ledger_account_id' => $financialAccount->ledger_account_id,
+                            ...(($data['payment_method'] ?? '') === 'cheque'
+                                ? ['account_code' => '202']
+                                : (($data['payment_method'] ?? '') === 'endorsed_cheque' ? ['account_code' => '104'] : ['ledger_account_id' => $financialAccount->ledger_account_id])),
                             'debit_rials' => 0,
                             'credit_rials' => $amount,
                             'notes' => "خروج وجه از {$financialAccount->name}",
@@ -146,7 +165,7 @@ class RecordPaymentAction
                     'source_id' => $payment->id,
                     'lines' => [
                         [
-                            'ledger_account_id' => $financialAccount->ledger_account_id,
+                            ...(($data['payment_method'] ?? '') === 'cheque' ? ['account_code' => '104'] : ['ledger_account_id' => $financialAccount->ledger_account_id]),
                             'debit_rials' => $amount,
                             'credit_rials' => 0,
                             'notes' => "ورود وجه به {$financialAccount->name}",

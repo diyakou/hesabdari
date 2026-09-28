@@ -6,7 +6,7 @@
 
 @section('content')
 <div class="max-w-4xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-    <form method="POST" action="{{ route('sales.store') }}" class="space-y-6" data-invoice-calculator>
+    <form method="POST" action="{{ route('sales.store') }}" class="space-y-6" data-invoice-calculator x-data="{ paymentMethod: @js(old('payment.payment_method', 'cash')) }">
         @csrf
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -150,12 +150,20 @@
 
                 <div>
                     <label for="payment_method" class="label">روش دریافت</label>
-                    <select id="payment_method" name="payment[payment_method]" class="input-text">
+                    <select id="payment_method" name="payment[payment_method]" class="input-text" x-model="paymentMethod">
                         <option value="cash">نقدی (صندوق)</option>
                         <option value="pos">کارت‌خوان (POS)</option>
                         <option value="bank_transfer">انتقال بانکی</option>
+                        <option value="cheque">چک</option>
                     </select>
                 </div>
+            </div>
+            <div x-show="paymentMethod === 'cheque'" x-cloak class="mt-4 grid grid-cols-1 gap-4 rounded-xl border border-amber-200 bg-amber-50 p-4 sm:grid-cols-2">
+                <div><label class="label">شماره چک *</label><input name="payment[check_number]" value="{{ old('payment.check_number') }}" class="input-text" :required="paymentMethod === 'cheque'"></div>
+                <div><label class="label">شناسه صیادی (۱۶ رقم)</label><input name="payment[sayad_id]" value="{{ old('payment.sayad_id') }}" inputmode="numeric" maxlength="16" class="input-text font-mono"></div>
+                <div><label class="label">نام بانک *</label><input name="payment[bank_name]" value="{{ old('payment.bank_name') }}" class="input-text" :required="paymentMethod === 'cheque'"></div>
+                <div><label class="label">صاحب حساب</label><input name="payment[account_owner]" value="{{ old('payment.account_owner') }}" class="input-text"></div>
+                <div><label class="label">تاریخ سررسید *</label><input type="text" data-jdp autocomplete="off" name="payment[due_date]" value="{{ old('payment.due_date') }}" class="input-text" :required="paymentMethod === 'cheque'"></div>
             </div>
         </div>
 

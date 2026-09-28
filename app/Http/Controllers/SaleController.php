@@ -156,7 +156,12 @@ class SaleController extends Controller
             'payment' => ['nullable', 'array'],
             'payment.amount_toman' => ['nullable', 'numeric', 'min:0'],
             'payment.financial_account_id' => ['nullable', 'exists:financial_accounts,id'],
-            'payment.payment_method' => ['nullable', 'string', 'in:cash,pos,bank_transfer'],
+            'payment.payment_method' => ['nullable', 'string', 'in:cash,pos,bank_transfer,cheque'],
+            'payment.check_number' => ['nullable', 'required_if:payment.payment_method,cheque', 'string', 'max:100'],
+            'payment.sayad_id' => ['nullable', 'digits:16'],
+            'payment.bank_name' => ['nullable', 'required_if:payment.payment_method,cheque', 'string', 'max:100'],
+            'payment.account_owner' => ['nullable', 'string', 'max:150'],
+            'payment.due_date' => ['nullable', 'required_if:payment.payment_method,cheque', 'date'],
         ]);
 
         $invoice = DB::transaction(function () use ($validated, $request) {
@@ -249,11 +254,19 @@ class SaleController extends Controller
         if ($request->boolean('finalize_now', true)) {
             $paymentList = [];
             if (! empty($validated['payment']['amount_toman']) && ! empty($validated['payment']['financial_account_id'])) {
-                $paymentList[] = [
+                $paymentData = [
                     'financial_account_id' => (int) $validated['payment']['financial_account_id'],
                     'amount_rials' => (int) ($validated['payment']['amount_toman'] * 10),
                     'payment_method' => $validated['payment']['payment_method'] ?? 'cash',
                 ];
+                if (($validated['payment']['payment_method'] ?? '') === 'cheque') {
+                    $paymentData['cheque'] = [
+                        'check_number' => $validated['payment']['check_number'], 'sayad_id' => $validated['payment']['sayad_id'] ?? null,
+                        'bank_name' => $validated['payment']['bank_name'], 'account_owner' => $validated['payment']['account_owner'] ?? null,
+                        'due_date' => $validated['payment']['due_date'],
+                    ];
+                }
+                $paymentList[] = $paymentData;
             }
 
             $this->finalizeSaleAction->execute($invoice, $paymentList, $request->user());

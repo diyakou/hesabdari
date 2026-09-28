@@ -281,6 +281,7 @@ class FinalizeSaleAction
                         'financial_account_id' => (int) $paymentData['financial_account_id'],
                         'amount_rials' => $payAmount,
                         'payment_method' => $paymentData['payment_method'] ?? 'cash',
+                        'cheque' => $paymentData['cheque'] ?? null,
                         'date' => $lockedInvoice->issue_date,
                         'notes' => "تسویه هم‌زمان فاکتور فروش {$lockedInvoice->invoice_number}",
                         'allocations' => [

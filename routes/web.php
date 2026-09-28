@@ -39,6 +39,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::get('/sales/{invoice}/print', [\App\Http\Controllers\SaleController::class, 'print'])->name('sales.print');
 
     Route::resource('payments', \App\Http\Controllers\PaymentController::class)->only(['index', 'create', 'store', 'show']);
+    Route::get('/cheques', [\App\Http\Controllers\ChequeController::class, 'index'])->name('cheques.index');
 
     Route::resource('services', \App\Http\Controllers\ServiceOrderController::class)->only(['index', 'create', 'store', 'show']);
     Route::patch('/services/{service}/status', [\App\Http\Controllers\ServiceOrderController::class, 'updateStatus'])->name('services.status');
